@@ -1,0 +1,98 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgres"
+  url      = env("DATABASE_URL")
+}
+
+model Dispensa {
+  id        Int                 @id @default(autoincrement())
+  nome      String              @db.VarChar(100)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt()
+  usuarioID String              @db.VarChar(36)
+  usuario   Usuario             @relation(fields: [usuarioID], references: [id])
+  alimentos Alimentos[]
+  membros   UsuarioNaDispensa[]
+  Usuario   Usuario[]           @relation("UsuarioToDonoDispensa")
+
+  @@map("Dispensa")
+  UsoAlimento UsoAlimento[]
+}
+
+model Alimentos {
+  id          Int        @id @default(autoincrement())
+  nome        String     @db.VarChar(100)
+  peso        Decimal    @db.Decimal(10, 2)
+  perecivel   Pereciveis @default(NÃO)
+  unidadeTipo Unidades   @default(KG)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt()
+  dispensa    Dispensa   @relation(fields: [dispensaId], references: [id])
+  dispensaId  Int
+
+  @@map("Alimento")
+  UsoAlimento UsoAlimento[]
+}
+
+enum Pereciveis {
+  NÃO
+  SIM
+}
+
+enum Unidades {
+  KG
+  PCT
+  REDE
+  DUZIA
+  LT
+  Unid
+}
+
+model Usuario {
+  id        String              @id @default(uuid()) @db.VarChar(36)
+  nome      String              @db.VarChar(60)
+  email     String              @db.VarChar(40)
+  senha     String              @db.VarChar(60)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+  dispensa  UsuarioNaDispensa[]
+  donoDe    Dispensa[]          @relation("UsuarioToDonoDispensa")
+  Dispensa  Dispensa[]
+
+  @@map("clientes")
+  UsoAlimento UsoAlimento[]
+}
+
+model UsuarioNaDispensa {
+  id         String              @id @default(uuid()) @db.VarChar(36)
+  usuarioID  String @db.VarChar(36)
+  dispensaID Int
+
+  usuario  Usuario  @relation(fields: [usuarioID], references: [id])
+  dispensa Dispensa @relation(fields: [dispensaID], references: [id])
+
+  @@unique([usuarioID, dispensaID])
+}
+
+model UsoAlimento {
+  id              Int       @id @default(autoincrement())
+  alimento        Alimentos @relation(fields: [alimentoId], references: [id])
+  alimentoId      Int
+  quantidadeUsada Decimal   @db.Decimal(10, 2)
+  usuario         Usuario   @relation(fields: [usuarioId], references: [id])
+  usuarioId       String    @db.VarChar(36)
+  dispensa        Dispensa  @relation(fields: [dispensaId], references: [id])
+  dispensaId      Int
+  createdAt       DateTime  @default(now())
+
+  @@map("UsoAlimento")
+}

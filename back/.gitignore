@@ -1,0 +1,14 @@
+node_modules
+# Keep environment variables out of version control
+
+# Pasta de build do Next.js
+/front/.next/
+
+# Pastas de dependências
+/node_modules/
+/front/node_modules/
+/back/node_modules/
+
+# Arquivos de ambiente (segurança)
+.env
+.env.local
