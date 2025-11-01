@@ -12,11 +12,21 @@ interface ChatBoxProps {
 
 export function ChatBox({ friend, onClose }: ChatBoxProps) {
   const [message, setMessage] = useState("")
+  const [isLoading, setIsLoading] = useState(false) // Added loading state
   const { cliente } = useClienteStore()
-  const { sendMessage, getConversation } = useFriendsStore()
+  const { sendMessage, getConversation, loadConversation } = useFriendsStore()
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const conversation = getConversation(cliente.id, friend.id)
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      setIsLoading(true)
+      await loadConversation(cliente.id, friend.id)
+      setIsLoading(false)
+    }
+    fetchMessages()
+  }, [cliente.id, friend.id, loadConversation])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -26,10 +36,10 @@ export function ChatBox({ friend, onClose }: ChatBoxProps) {
     scrollToBottom()
   }, [conversation])
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
     if (message.trim()) {
-      sendMessage({
+      await sendMessage({
         senderId: cliente.id,
         receiverId: friend.id,
         content: message.trim(),
@@ -58,7 +68,11 @@ export function ChatBox({ friend, onClose }: ChatBoxProps) {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {conversation.length === 0 ? (
+        {isLoading ? (
+          <div className="text-center text-gray-500 mt-8">
+            <p>Carregando mensagens...</p>
+          </div>
+        ) : conversation.length === 0 ? (
           <div className="text-center text-gray-500 mt-8">
             <p>Nenhuma mensagem ainda.</p>
             <p className="text-sm">Envie uma mensagem para começar!</p>

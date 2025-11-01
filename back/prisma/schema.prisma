@@ -67,9 +67,28 @@ model Usuario {
   dispensa  UsuarioNaDispensa[]
   donoDe    Dispensa[]          @relation("UsuarioToDonoDispensa")
   Dispensa  Dispensa[]
+  mensagensEnviadas     Mensagem[]  @relation("MensagensEnviadas")
+  mensagensRecebidas    Mensagem[]  @relation("MensagensRecebidas")
 
   @@map("clientes")
   UsoAlimento UsoAlimento[]
+}
+
+model Mensagem {
+  id              String   @id @default(uuid())
+  remetenteId     String
+  destinatarioId  String
+  conteudo        String
+  lida            Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  remetente       Usuario  @relation("MensagensEnviadas", fields: [remetenteId], references: [id])
+  destinatario    Usuario  @relation("MensagensRecebidas", fields: [destinatarioId], references: [id])
+
+  @@index([remetenteId])
+  @@index([destinatarioId])
+  @@index([createdAt])
 }
 
 model UsuarioNaDispensa {

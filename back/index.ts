@@ -4,6 +4,7 @@ import routesCarros from './routes/Alimentos'
 import routesClientes from './routes/clientes'
 import routesLogin from './routes/login'
 import routeDispensa from './routes/dispensa'
+import mensagensRouter from './routes/mensagens'
 const app = express()
 const port = 3001
 
@@ -14,7 +15,7 @@ app.use("/alimentos", routesCarros)
 app.use("/clientes", routesClientes)
 app.use("/clientes/login", routesLogin)
 app.use("/dispensa", routeDispensa)
-
+app.use('/mensagens', mensagensRouter)
 
 
 app.get('/', (req, res) => {

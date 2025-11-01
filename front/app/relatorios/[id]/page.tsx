@@ -125,9 +125,7 @@ export default function RelatoriosPage() {
   const tempStatus = getTemperatureStatus(temperature)
 
   const chartData = alimentos.slice(0, 4).map((alimento) => {
-    const consumido = historico
-      .filter((h) => h.alimento === alimento.nome)
-      .reduce((sum, h) => sum + Number(h.quantidade || 0), 0)
+    const consumido = historico.filter((h) => h.alimento === alimento.nome) .reduce((sum, h) => sum + Number(h.quantidade || 0), 0)
 
     return {
       name: alimento.nome,
@@ -136,11 +134,11 @@ export default function RelatoriosPage() {
     }
   })
 
-  const historicoFiltrado = historico.filter(
+  const historicoFiltrado = Array.isArray(historico) ? historico.filter(
     (item) =>
       item.usuario?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.alimento?.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  ) : []
 
   return (
     <div className="min-h-screen bg-[#f8fafc]">
