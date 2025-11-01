@@ -18,15 +18,33 @@ export function UserSearchBox() {
       setLoading(true)
       setError(null)
       try {
+        console.log("[v0] Fetching users from API:", `${process.env.NEXT_PUBLIC_URL_API}/clientes`)
         const response = await fetch(`${process.env.NEXT_PUBLIC_URL_API}/clientes`)
+
         if (!response.ok) {
           throw new Error("Erro ao carregar usuários")
         }
+
         const data = await response.json()
-        setAllUsers(data)
+        console.log("[v0] API response:", data)
+
+        let users: Friend[] = []
+        if (Array.isArray(data)) {
+          users = data
+        } else if (data.clientes && Array.isArray(data.clientes)) {
+          users = data.clientes
+        } else if (data.data && Array.isArray(data.data)) {
+          users = data.data
+        } else {
+          console.error("[v0] Unexpected API response structure:", data)
+          throw new Error("Formato de resposta inválido")
+        }
+
+        console.log("[v0] Processed users:", users)
+        setAllUsers(users)
       } catch (err) {
         setError(err instanceof Error ? err.message : "Erro ao carregar usuários")
-        console.error("Erro ao buscar usuários:", err)
+        console.error("[v0] Erro ao buscar usuários:", err)
       } finally {
         setLoading(false)
       }
@@ -35,13 +53,15 @@ export function UserSearchBox() {
     fetchUsers()
   }, [])
 
-  const filteredUsers = allUsers.filter(
-    (user) =>
-      user.id !== cliente.id &&
-      !friends.some((f) => f.id === user.id) &&
-      (user.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase())),
-  )
+  const filteredUsers = Array.isArray(allUsers)
+    ? allUsers.filter(
+        (user) =>
+          user.id !== cliente.id &&
+          !friends.some((f) => f.id === user.id) &&
+          (user.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            user.email.toLowerCase().includes(searchQuery.toLowerCase())),
+      )
+    : []
 
   const handleAddFriend = (user: Friend) => {
     addFriend(user)
