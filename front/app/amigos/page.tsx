@@ -8,30 +8,27 @@ import { useEffect } from "react"
 
 export default function AmigosPage() {
   const { friends, removeFriend, messages, openChat } = useFriendsStore()
-  const { cliente } = useClienteStore()
+  const { cliente, isHydrated } = useClienteStore()
   const router = useRouter()
 
   useEffect(() => {
-    if (!cliente || !cliente.id) {
+    if (isHydrated && (!cliente || !cliente.id)) {
       router.push("/login")
     }
-  }, [cliente, router])
+  }, [cliente, router, isHydrated])
+
+  if (!isHydrated || !cliente || !cliente.id) {
+    return null
+  }
 
   const handleRemoveFriend = (friendId: string) => {
-    // Changed parameter type to string
     if (confirm("Tem certeza que deseja remover este amigo?")) {
       removeFriend(friendId)
-      // Removed setSelectedFriend logic since openChat is used now
     }
   }
 
   const getUnreadCount = (friendId: string) => {
-    // Changed parameter type to string
     return messages.filter((msg) => msg.senderId === friendId && msg.receiverId === cliente.id && !msg.read).length
-  }
-
-  if (!cliente || !cliente.id) {
-    return null
   }
 
   return (
