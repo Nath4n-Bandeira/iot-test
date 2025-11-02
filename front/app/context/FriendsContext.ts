@@ -137,7 +137,8 @@ export const useFriendsStore = create<FriendsStore>()(
             const errorText = await response.text()
             console.error("[v0] Failed to load messages. Status:", response.status)
             console.error("[v0] Error response:", errorText)
-            throw new Error(`Failed to load messages: ${response.status} ${response.statusText}`)
+            console.log("[v0] Using locally stored messages as fallback")
+            return
           }
 
           const data = await response.json()
@@ -169,6 +170,7 @@ export const useFriendsStore = create<FriendsStore>()(
           })
         } catch (error) {
           console.error("[v0] Error loading conversation:", error)
+          console.log("[v0] Falling back to local messages storage")
         }
       },
       setMessages: (messages) => set({ messages }),
