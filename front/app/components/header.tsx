@@ -2,6 +2,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { useClienteStore } from "../context/ClienteContext" // Usando sua lógica original
+import { useFriendsStore } from "../context/FriendsContext"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { ChevronDown, LogOut, Settings, User } from "lucide-react"
@@ -10,12 +11,14 @@ import FriendsModal from "./modals/FriendsModal"
 
 export function Header() {
   const { cliente, deslogaCliente } = useClienteStore()
+  const { reset: resetFriends } = useFriendsStore()
   const router = useRouter()
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
 
   function clienteSair() {
     if (confirm("Confirma saída da conta ?")) {
       deslogaCliente()
+      resetFriends()
       if (localStorage.getItem("clienteKey")) {
         localStorage.removeItem("clienteKey")
       }
