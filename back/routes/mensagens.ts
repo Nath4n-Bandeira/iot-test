@@ -139,4 +139,4 @@ router.get("/", verificaToken, async (req: AuthenticatedRequest, res) => {
   }
 })
 
-export default router
+export default router;
