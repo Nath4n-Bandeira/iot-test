@@ -4,8 +4,9 @@ import Image from "next/image"
 import { useClienteStore } from "../context/ClienteContext" // Usando sua lógica original
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { ChevronDown, LogOut, Settings, User, Users } from "lucide-react"
+import { ChevronDown, LogOut, Settings, User } from "lucide-react"
 import Cookie from "js-cookie"
+import FriendsModal from "./modals/FriendsModal"
 
 export function Header() {
   const { cliente, deslogaCliente } = useClienteStore()
@@ -40,13 +41,7 @@ export function Header() {
             {isLoggedIn ? (
               // --- logaduuuuu ---
               <>
-                <Link
-                  href="/amigos"
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors font-medium"
-                >
-                  <Users className="w-5 h-5" />
-                  <span className="hidden sm:inline">Amigos</span>
-                </Link>
+                <FriendsModal />
 
                 <div className="relative">
                   <button

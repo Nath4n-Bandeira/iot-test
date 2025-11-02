@@ -36,6 +36,11 @@ export function ChatBox({ friend, onClose }: ChatBoxProps) {
     scrollToBottom()
   }, [conversation])
 
+  if (!friend || !friend.id) {
+    console.error("[v0] ChatBox received invalid friend object:", friend)
+    return null
+  }
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
     if (message.trim()) {
@@ -48,16 +53,19 @@ export function ChatBox({ friend, onClose }: ChatBoxProps) {
     }
   }
 
+  const friendName = friend.nome || friend.email || "Usuário"
+  const friendInitial = friendName.charAt(0).toUpperCase()
+
   return (
     <div className="fixed bottom-4 right-4 w-96 h-[500px] bg-white rounded-lg shadow-2xl border border-gray-200 flex flex-col z-50">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-green-600 text-white rounded-t-lg">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-white text-green-600 flex items-center justify-center font-semibold">
-            {friend.nome.charAt(0).toUpperCase()}
+            {friendInitial}
           </div>
           <div>
-            <p className="font-semibold">{friend.nome}</p>
+            <p className="font-semibold">{friendName}</p>
             <p className="text-xs text-green-100">Online</p>
           </div>
         </div>

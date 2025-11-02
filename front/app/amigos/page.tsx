@@ -1,16 +1,13 @@
 "use client"
-import { useState } from "react"
 import { UserSearchBox } from "../components/UserSearchBox"
-import { ChatBox } from "../components/ChatBox"
-import { useFriendsStore, type Friend } from "../context/FriendsContext"
+import { useFriendsStore } from "../context/FriendsContext"
 import { useClienteStore } from "../context/ClienteContext"
 import { MessageCircle, UserMinus, Users } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
 export default function AmigosPage() {
-  const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null)
-  const { friends, removeFriend, messages } = useFriendsStore()
+  const { friends, removeFriend, messages, openChat } = useFriendsStore()
   const { cliente } = useClienteStore()
   const router = useRouter()
 
@@ -24,9 +21,7 @@ export default function AmigosPage() {
     // Changed parameter type to string
     if (confirm("Tem certeza que deseja remover este amigo?")) {
       removeFriend(friendId)
-      if (selectedFriend?.id === friendId) {
-        setSelectedFriend(null)
-      }
+      // Removed setSelectedFriend logic since openChat is used now
     }
   }
 
@@ -89,7 +84,7 @@ export default function AmigosPage() {
 
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => setSelectedFriend(friend)}
+                        onClick={() => openChat(friend)}
                         className="relative p-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
                         title="Enviar mensagem"
                       >
@@ -115,9 +110,6 @@ export default function AmigosPage() {
           )}
         </div>
       </div>
-
-      {/* Chat Box */}
-      {selectedFriend && <ChatBox friend={selectedFriend} onClose={() => setSelectedFriend(null)} />}
     </div>
   )
 }

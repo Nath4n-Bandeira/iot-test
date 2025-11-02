@@ -22,6 +22,7 @@ export interface Message {
 type FriendsStore = {
   friends: Friend[]
   messages: Message[]
+  activeChat: Friend | null
   addFriend: (friend: Friend) => void
   removeFriend: (friendId: string) => void
   sendMessage: (message: Omit<Message, "id" | "timestamp" | "read">) => Promise<void>
@@ -29,6 +30,8 @@ type FriendsStore = {
   getConversation: (userId: string, friendId: string) => Message[]
   loadConversation: (userId: string, friendId: string) => Promise<void>
   setMessages: (messages: Message[]) => void
+  openChat: (friend: Friend) => void
+  closeChat: () => void
 }
 
 const getAuthHeaders = () => {
@@ -44,6 +47,7 @@ export const useFriendsStore = create<FriendsStore>()(
     (set, get) => ({
       friends: [],
       messages: [],
+      activeChat: null,
       addFriend: (friend) =>
         set((state) => ({
           friends: [...state.friends, friend],
@@ -167,11 +171,15 @@ export const useFriendsStore = create<FriendsStore>()(
         }
       },
       setMessages: (messages) => set({ messages }),
+      openChat: (friend) => set({ activeChat: friend }),
+      closeChat: () => set({ activeChat: null }),
     }),
     {
       name: "friends-storage",
+      partialize: (state) => ({
+        friends: state.friends,
+        messages: state.messages,
+      }),
     },
   ),
 )
-
-export default useFriendsStore
