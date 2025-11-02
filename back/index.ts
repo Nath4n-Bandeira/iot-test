@@ -15,8 +15,7 @@ app.use("/alimentos", routesCarros)
 app.use("/clientes", routesClientes)
 app.use("/clientes/login", routesLogin)
 app.use("/dispensa", routeDispensa)
-app.use('/mensagens', mensagensRouter)
-
+app.use('/mensagens', mensagensRouter);
 
 app.get('/', (req, res) => {
   res.send('WORLD OF ARTIFACTS OF POWER')
