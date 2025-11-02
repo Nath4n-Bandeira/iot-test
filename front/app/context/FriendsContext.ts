@@ -32,6 +32,7 @@ type FriendsStore = {
   setMessages: (messages: Message[]) => void
   openChat: (friend: Friend) => void
   closeChat: () => void
+  reset: () => void
 }
 
 const getAuthHeaders = () => {
@@ -173,6 +174,7 @@ export const useFriendsStore = create<FriendsStore>()(
       setMessages: (messages) => set({ messages }),
       openChat: (friend) => set({ activeChat: friend }),
       closeChat: () => set({ activeChat: null }),
+      reset: () => set({ friends: [], messages: [], activeChat: null }),
     }),
     {
       name: "friends-storage",
