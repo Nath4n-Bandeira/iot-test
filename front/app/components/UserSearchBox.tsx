@@ -10,7 +10,8 @@ export function UserSearchBox() {
   const [allUsers, setAllUsers] = useState<Friend[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { friends, addFriend } = useFriendsStore()
+  const [pendingRequests, setPendingRequests] = useState<Set<string>>(new Set()) // Track pending requests
+  const { friends, sendFriendRequest, friendRequests } = useFriendsStore() // Updated to use sendFriendRequest
   const { cliente } = useClienteStore()
 
   useEffect(() => {
@@ -63,9 +64,23 @@ export function UserSearchBox() {
       )
     : []
 
-  const handleAddFriend = (user: Friend) => {
-    addFriend(user)
-    setSearchQuery("")
+  const isFriendRequestSent = (userId: string) => {
+    return friendRequests.some((r) => r.receiverId === userId && r.status === "pending") || pendingRequests.has(userId)
+  }
+
+  const handleAddFriend = async (user: Friend) => {
+    setPendingRequests((prev) => new Set([...prev, user.id]))
+    try {
+      await sendFriendRequest(user.id, user.nome, user.email)
+      setSearchQuery("")
+    } catch (error) {
+      console.error("[v0] Error sending friend request:", error)
+      setPendingRequests((prev) => {
+        const next = new Set(prev)
+        next.delete(user.id)
+        return next
+      })
+    }
   }
 
   return (
@@ -124,8 +139,13 @@ export function UserSearchBox() {
               </div>
               <button
                 onClick={() => handleAddFriend(user)}
-                className="p-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
-                title="Adicionar amigo"
+                disabled={isFriendRequestSent(user.id) || pendingRequests.has(user.id)} // Disable if request already sent
+                className={`p-2 rounded-lg text-white transition-colors ${
+                  isFriendRequestSent(user.id) || pendingRequests.has(user.id)
+                    ? "bg-gray-400 cursor-not-allowed" // Show disabled state
+                    : "bg-green-600 hover:bg-green-700"
+                }`}
+                title={isFriendRequestSent(user.id) ? "Pedido de amizade enviado" : "Enviar pedido de amizade"} // Updated tooltip
               >
                 <UserPlus className="w-5 h-5" />
               </button>

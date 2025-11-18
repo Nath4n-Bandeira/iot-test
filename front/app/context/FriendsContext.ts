@@ -1,4 +1,3 @@
-// context/FriendsContext.ts
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import Cookies from "js-cookie"
@@ -8,6 +7,16 @@ export interface Friend {
   nome: string
   email: string
   avatar?: string
+}
+
+export interface FriendRequest {
+  id: string
+  senderId: string
+  senderName: string
+  senderEmail: string
+  receiverId: string
+  status: "pending" | "accepted" | "rejected"
+  createdAt: Date
 }
 
 export interface Message {
@@ -23,6 +32,11 @@ type FriendsStore = {
   friends: Friend[]
   messages: Message[]
   activeChat: Friend | null
+  friendRequests: FriendRequest[]
+  loadFriends: () => Promise<void>  // Add load friends from backend
+  sendFriendRequest: (targetUserId: string, targetUserName: string, targetUserEmail: string) => Promise<void>
+  acceptFriendRequest: (requestId: string, friend: Friend) => Promise<void>
+  rejectFriendRequest: (requestId: string) => Promise<void>
   addFriend: (friend: Friend) => void
   removeFriend: (friendId: string) => void
   sendMessage: (message: Omit<Message, "id" | "timestamp" | "read">) => Promise<void>
@@ -49,6 +63,99 @@ export const useFriendsStore = create<FriendsStore>()(
       friends: [],
       messages: [],
       activeChat: null,
+      friendRequests: [],
+
+      loadFriends: async () => {
+        try {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_URL_API}/amigos`, {
+            headers: getAuthHeaders(),
+          })
+
+          if (!response.ok) {
+            throw new Error("Failed to load friends")
+          }
+
+          const friends = await response.json()
+          set({ friends })
+        } catch (error) {
+          console.error("Error loading friends:", error)
+        }
+      },
+
+      sendFriendRequest: async (targetUserId: string, targetUserName: string, targetUserEmail: string) => {
+        try {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_URL_API}/friendRequests`, {
+            method: "POST",
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              receiverId: targetUserId,
+            }),
+          })
+
+          if (!response.ok) {
+            throw new Error("Failed to send friend request")
+          }
+
+          const savedRequest = await response.json()
+
+          set((state) => ({
+            friendRequests: [
+              ...state.friendRequests,
+              {
+                id: savedRequest.id,
+                senderId: savedRequest.senderId,
+                senderName: savedRequest.senderName || "Usuário",
+                senderEmail: savedRequest.senderEmail || "",
+                receiverId: savedRequest.receiverId,
+                status: "pending",
+                createdAt: new Date(savedRequest.createdAt),
+              },
+            ],
+          }))
+        } catch (error) {
+          throw error
+        }
+      },
+
+      acceptFriendRequest: async (requestId: string, friend: Friend) => {
+        try {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_URL_API}/friendRequests/${requestId}/accept`, {
+            method: "POST",
+            headers: getAuthHeaders(),
+          })
+
+          if (!response.ok) {
+            throw new Error("Failed to accept friend request")
+          }
+
+          set((state) => ({
+            friendRequests: state.friendRequests.filter((r) => r.id !== requestId),
+            friends: [...state.friends, friend],
+          }))
+        } catch (error) {
+          throw error
+        }
+      },
+
+      rejectFriendRequest: async (requestId: string) => {
+        try {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_URL_API}/friendRequests/${requestId}/reject`, {
+            method: "POST",
+            headers: getAuthHeaders(),
+          })
+
+          if (!response.ok) {
+            throw new Error("Failed to reject friend request")
+          }
+
+          set((state) => ({
+            friendRequests: state.friendRequests.filter((r) => r.id !== requestId),
+          }))
+        } catch (error) {
+          throw error
+        }
+      },
+
       addFriend: (friend) =>
         set((state) => ({
           friends: [...state.friends, friend],
@@ -59,7 +166,6 @@ export const useFriendsStore = create<FriendsStore>()(
         })),
       sendMessage: async (message) => {
         try {
-          console.log("[v0] Sending message to backend:", message)
           const response = await fetch(`${process.env.NEXT_PUBLIC_URL_API}/mensagens`, {
             method: "POST",
             headers: getAuthHeaders(),
@@ -70,13 +176,10 @@ export const useFriendsStore = create<FriendsStore>()(
           })
 
           if (!response.ok) {
-            const errorText = await response.text()
-            console.error("[v0] Failed to send message:", errorText)
             throw new Error("Failed to send message")
           }
 
           const savedMessage = await response.json()
-          console.log("[v0] Message saved:", savedMessage)
 
           set((state) => ({
             messages: [
@@ -92,8 +195,6 @@ export const useFriendsStore = create<FriendsStore>()(
             ],
           }))
         } catch (error) {
-          console.error("[v0] Error sending message:", error)
-          // Fallback to local storage if API fails
           set((state) => ({
             messages: [
               ...state.messages,
@@ -123,25 +224,15 @@ export const useFriendsStore = create<FriendsStore>()(
       },
       loadConversation: async (userId, friendId) => {
         try {
-          console.log("[v0] Loading conversation between:", userId, "and", friendId)
-          console.log("[v0] API URL:", `${process.env.NEXT_PUBLIC_URL_API}/mensagens/conversa/${friendId}`)
-          console.log("[v0] Token:", Cookies.get("token") ? "Present" : "Missing")
-
           const response = await fetch(`${process.env.NEXT_PUBLIC_URL_API}/mensagens/conversa/${friendId}`, {
             headers: getAuthHeaders(),
           })
 
-          console.log("[v0] Response status:", response.status, response.statusText)
-
           if (!response.ok) {
-            const errorText = await response.text()
-            console.error("[v0] Failed to load messages. Status:", response.status)
-            console.error("[v0] Error response:", errorText)
             throw new Error(`Failed to load messages: ${response.status} ${response.statusText}`)
           }
 
           const data = await response.json()
-          console.log("[v0] Loaded messages from API:", data)
 
           const messages: Message[] = Array.isArray(data)
             ? data.map((msg: any) => ({
@@ -167,19 +258,20 @@ export const useFriendsStore = create<FriendsStore>()(
             }
           })
         } catch (error) {
-          console.error("[v0] Error loading conversation:", error)
+          // Silent error handling
         }
       },
       setMessages: (messages) => set({ messages }),
       openChat: (friend) => set({ activeChat: friend }),
       closeChat: () => set({ activeChat: null }),
-      reset: () => set({ friends: [], messages: [], activeChat: null }),
+      reset: () => set({ friends: [], messages: [], activeChat: null, friendRequests: [] }),
     }),
     {
       name: "friends-storage",
       partialize: (state) => ({
         friends: state.friends,
         messages: state.messages,
+        friendRequests: state.friendRequests,
       }),
     },
   ),

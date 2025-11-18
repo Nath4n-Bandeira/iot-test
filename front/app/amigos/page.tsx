@@ -2,12 +2,12 @@
 import { UserSearchBox } from "../components/UserSearchBox"
 import { useFriendsStore } from "../context/FriendsContext"
 import { useClienteStore } from "../context/ClienteContext"
-import { MessageCircle, UserMinus, Users } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { MessageCircle, UserMinus, Users } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { useEffect } from "react"
-
+import PendingFriendRequests from "../components/PendingFriendRequest"
 export default function AmigosPage() {
-  const { friends, removeFriend, messages, openChat } = useFriendsStore()
+  const { friends, removeFriend, messages, openChat, loadFriends } = useFriendsStore()
   const { cliente, isHydrated } = useClienteStore()
   const router = useRouter()
 
@@ -16,6 +16,12 @@ export default function AmigosPage() {
       router.push("/login")
     }
   }, [cliente, router, isHydrated])
+
+  useEffect(() => {
+    if (isHydrated && cliente?.id) {
+      loadFriends()
+    }
+  }, [isHydrated, cliente?.id, loadFriends])
 
   if (!isHydrated || !cliente || !cliente.id) {
     return null
@@ -47,6 +53,9 @@ export default function AmigosPage() {
         <div className="mb-8">
           <UserSearchBox />
         </div>
+
+        {/* Pending Friend Requests */}
+        <PendingFriendRequests />
 
         {/* Friends List */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">

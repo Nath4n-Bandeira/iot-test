@@ -62,27 +62,27 @@ export default function EditItemModal({ id, dispensaId }: { id: number, dispensa
       </button>
       <Modal isOpen={isOpen} onClose={() => setIsOpen(false)}>
         <form onSubmit={handleSubmit(tryinput)}>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-foreground">
             Nome do alimento
           </label>
           <input
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+            className="mt-1 block w-full rounded-md border border-input bg-background text-foreground shadow-sm"
             type="text"
             required
             {...register("nome")}
           />
-          <label className="block text-sm font-medium text-gray-700 mt-4">
+          <label className="block text-sm font-medium text-foreground mt-4">
             Qtd\Kg
           </label>
           <input
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+            className="mt-1 block w-full rounded-md border border-input bg-background text-foreground shadow-sm"
             type="number"
             required
             {...register("peso", { valueAsNumber: true })}
           />
           <button
             type="submit"
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="mt-4 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium"
           >
             Salvar
           </button>

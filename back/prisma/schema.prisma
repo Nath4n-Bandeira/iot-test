@@ -69,9 +69,13 @@ model Usuario {
   Dispensa  Dispensa[]
   mensagensEnviadas     Mensagem[]  @relation("MensagensEnviadas")
   mensagensRecebidas    Mensagem[]  @relation("MensagensRecebidas")
-
-  @@map("clientes")
-  UsoAlimento UsoAlimento[]
+   
+solicitacoesFriendRequest     FriendRequest[]  @relation("SolicitanteFriendRequest")
+solicitacoesRecebidas         FriendRequest[]  @relation("DestinatarioFriendRequest")
+amizadesIniciadas  Amizade[] @relation("AmizadeUsuario1")
+amizadesRecebidas  Amizade[] @relation("AmizadeUsuario2")
+@@map("clientes")
+UsoAlimento UsoAlimento[]
 }
 
 model Mensagem {
@@ -114,4 +118,35 @@ model UsoAlimento {
   createdAt       DateTime  @default(now())
 
   @@map("UsoAlimento")
+}
+
+model Amizade {
+  id        String   @id @default(uuid())
+  usuario1Id String   @db.VarChar(36)
+  usuario2Id String   @db.VarChar(36)
+  createdAt DateTime @default(now())
+
+  usuario1  Usuario  @relation("AmizadeUsuario1", fields: [usuario1Id], references: [id], onDelete: Cascade)
+  usuario2  Usuario  @relation("AmizadeUsuario2", fields: [usuario2Id], references: [id], onDelete: Cascade)
+
+  @@unique([usuario1Id, usuario2Id])
+  @@index([usuario1Id])
+  @@index([usuario2Id])
+  @@map("Amizade")
+}
+
+model FriendRequest {
+  id              String   @id @default(uuid())
+  solicitanteId   String   @db.VarChar(36)
+  destinatarioId  String   @db.VarChar(36)
+  status          String   @default("pending") // pending, accepted, rejected
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  solicitante     Usuario  @relation("SolicitanteFriendRequest", fields: [solicitanteId], references: [id])
+  destinatario    Usuario  @relation("DestinatarioFriendRequest", fields: [destinatarioId], references: [id])
+
+  @@unique([solicitanteId, destinatarioId])
+  @@index([destinatarioId])
+  @@index([status])
 }
