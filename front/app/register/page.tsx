@@ -3,7 +3,7 @@ import React from 'react'
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { useClienteStore } from "@/app/context/ClienteContext"
-import { useRouter } from "next/navigation"
+import { useRouter } from 'next/navigation'
 import { Lock, Mail, User, ArrowRight } from 'lucide-react'
 
 
@@ -19,18 +19,32 @@ export default function Registro() {
 
     
     async function criaConta(data: Inputs) {
-          const response = await 
-          fetch(`${process.env.NEXT_PUBLIC_URL_API}/clientes`, {
-            headers: {"Content-Type": "application/json"},
-            method: "POST",
-            body: JSON.stringify({ nome: data.nome, email: data.email, senha: data.senha })
+      try {
+        const response = await 
+        fetch(`${process.env.NEXT_PUBLIC_URL_API}/clientes`, {
+          headers: {"Content-Type": "application/json"},
+          method: "POST",
+          body: JSON.stringify({ nome: data.nome, email: data.email, senha: data.senha })
+        })
+       if (response.status == 201 || response.status == 200) {
+          toast.success("Conta criada com sucesso! Por favor, faça o login.")
+          router.push("/login") // Redireciona para a página de login
+      } else {
+          toast.error("Erro... Não foi possível criar sua conta.", {
+            style: {
+              background: "#dc2626",
+              color: "#ffffff",
+            },
           })
-         if (response.status == 201 || response.status == 200) {
-            toast.success("Conta criada com sucesso! Por favor, faça o login.")
-            router.push("/login") // Redireciona para a página de login
-        } else {
-            toast.error("Erro... Não foi possível criar sua conta.")
-        }
+      }
+      } catch (error) {
+        toast.error("Erro inesperado ao criar conta", {
+          style: {
+            background: "#dc2626",
+            color: "#ffffff",
+          },
+        })
+      }
     }
 
     return (

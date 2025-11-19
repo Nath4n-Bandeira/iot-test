@@ -1,10 +1,11 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { Geist, Geist_Mono } from 'next/font/google'
 import "./globals.css"
 import { Header } from "./components/header"
 import { footerzinho } from "./components/footer"
 import { GlobalChatManager } from "./components/GlobalChatManager"
+import { Toaster } from "./components/ui/sonner"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,6 +34,7 @@ export default function RootLayout({
         {children}
         {footerzinho()}
         <GlobalChatManager />
+        <Toaster />
       </body>
     </html>
   )

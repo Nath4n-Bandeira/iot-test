@@ -1,10 +1,10 @@
 "use client"
-import { User, Search, Settings, BarChart3, History } from "lucide-react"
+import { User, Search, Settings, BarChart3, History } from 'lucide-react'
 import ItemModal from "../../components/modals/addItemmodal"
 import EditItemModal from "@/app/components/modals/editItemmodal"
 import { useEffect, useState } from "react"
 import type { AlimentosItf } from "../../utils/types/AlimentosItf"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, useRouter } from 'next/navigation'
 import UserModal from "@/app/components/modals/userModal"
 import type { DispensaItf } from "@/app/utils/types/DispensaItf"
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts"
@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
+import { toast } from "sonner"
 
 export default function InstanciaPage() {
   const [alimentos, setPropostas] = useState<AlimentosItf[]>([])
@@ -94,8 +95,15 @@ export default function InstanciaPage() {
       })
       setPropostas((prev) => prev.filter((item) => item.id !== id))
       handleCloseDetails()
+      toast.success("Item deletado com sucesso!", {
+        style: {
+          background: "#00c950",
+          color: "#ffffff",
+        },
+      })
     } catch (error) {
       console.error("Erro ao deletar alimento:", error)
+      toast.error("Erro ao deletar item. Tente novamente.")
     }
   }
 
@@ -110,9 +118,16 @@ export default function InstanciaPage() {
       })
       setDispensa(null)
       setShowConfigForm(false)
+      toast.success("Dispensa deletada com sucesso!", {
+        style: {
+          background: "#00c950",
+          color: "#ffffff",
+        },
+      })
       router.push("/perfil")
     } catch (error) {
       console.error("Erro ao deletar dispensa:", error)
+      toast.error("Erro ao deletar dispensa. Tente novamente.")
     }
   }
 
@@ -124,21 +139,6 @@ export default function InstanciaPage() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc]">
-      <header className="bg-white border-b border-[#e2e8f0] px-6 py-4">
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <Link href="/perfil" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-[#00c950] rounded-full flex items-center justify-center">
-              <span className="text-white text-sm font-bold">f</span>
-            </div>
-            <span className="text-[#1d293d] font-semibold text-lg">foodflow</span>
-          </Link>
-          <div className="flex items-center gap-2">
-            <User className="w-4 h-4 text-[#00c950]" />
-            <span className="text-[#444444] text-sm">{funcionario[0]?.nome || "Usuário"}</span>
-          </div>
-        </div>
-      </header>
-
       <main className="max-w-7xl mx-auto px-6 py-8">
         <div className="mb-8">
           <h1 className="text-[#1d293d] text-2xl font-semibold mb-6">Controle da dispensa {dispensa?.nome}</h1>
@@ -393,7 +393,7 @@ export default function InstanciaPage() {
                   <strong>Nome:</strong> {dispensa.nome}
                 </p>
               ) : (
-                <p className="text-[#90a1b9] mb-4">Carregando nome da dispensa...</p>
+                <p className="text-sm text-[#90a1b9] mb-4">Carregando nome da dispensa...</p>
               )}
 
               <button
@@ -444,25 +444,6 @@ export default function InstanciaPage() {
           </div>
         )}
       </main>
-
-      <footer className="bg-white border-t border-[#e2e8f0] px-6 py-8 mt-12">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 bg-[#00c950] rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">f</span>
-                </div>
-                <span className="text-[#1d293d] font-semibold">foodflow</span>
-              </div>
-              <p className="text-[#90a1b9] text-sm">Sua plataforma de gestão de dispensas.</p>
-            </div>
-          </div>
-          <div className="mt-8 pt-4 border-t border-[#e2e8f0]">
-            <p className="text-[#90a1b9] text-xs">© 2025 foodflow. Projeto integrador</p>
-          </div>
-        </div>
-      </footer>
-    </div>
+ </div>
   )
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { Search, History, User, Calendar, TrendingUp, ArrowLeft, Thermometer } from "lucide-react"
+import { Search, History, User, Calendar, TrendingUp, ArrowLeft, Thermometer, Download } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,8 +8,9 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import Link from "next/link"
 import { useState, useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, useRouter } from 'next/navigation'
 import Cookies from "js-cookie"
+import { toast } from "sonner"
 import type { ClienteItf } from "@/app/utils/types/ClienteItf"
 import type { DispensaItf } from "@/app/utils/types/DispensaItf"
 import type { AlimentosItf } from "@/app/utils/types/AlimentosItf"
@@ -24,11 +25,15 @@ export default function RelatoriosPage() {
   const [historico, setHistorico] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const [exporting, setExporting] = useState(false)
 
   // Temperature monitoring state
   const [temperature, setTemperature] = useState<number | null>(null)
   const [temperatureHistory, setTemperatureHistory] = useState<Array<{ time: string; temp: number }>>([])
   const [tempLoading, setTempLoading] = useState(true)
+
+  // Food search state
+  const [foodSearch, setFoodSearch] = useState("")
 
   useEffect(() => {
     if (!Cookies.get("token")) {
@@ -125,7 +130,9 @@ export default function RelatoriosPage() {
   const tempStatus = getTemperatureStatus(temperature)
 
   const chartData = alimentos.slice(0, 4).map((alimento) => {
-    const consumido = historico.filter((h) => h.alimento === alimento.nome) .reduce((sum, h) => sum + Number(h.quantidade || 0), 0)
+    const consumido = historico
+      .filter((h) => h.alimento === alimento.nome)
+      .reduce((sum, h) => sum + Number(h.quantidade || 0), 0)
 
     return {
       name: alimento.nome,
@@ -134,32 +141,66 @@ export default function RelatoriosPage() {
     }
   })
 
-  const historicoFiltrado = Array.isArray(historico) ? historico.filter(
-    (item) =>
-      item.usuario?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.alimento?.toLowerCase().includes(searchTerm.toLowerCase()),
-  ) : []
+  const historicoFiltrado = Array.isArray(historico)
+    ? historico.filter(
+        (item) =>
+          item.usuario?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.alimento?.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
+    : []
+
+  const filteredChartData = chartData.filter((item) =>
+    item.name.toLowerCase().includes(foodSearch.toLowerCase())
+  )
+
+  const handleExportToExcel = async () => {
+    try {
+      setExporting(true)
+      const XLSX = await import("xlsx")
+
+      const exportData = historicoFiltrado.map((record) => ({
+        ID: record.id || "",
+        Usuário: record.usuario || "Desconhecido",
+        Item: record.alimento || "",
+        Quantidade: `${record.quantidade} ${record.unidade}`,
+        Data: new Date(record.data).toLocaleDateString("pt-BR"),
+        Hora: new Date(record.data).toLocaleTimeString("pt-BR", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      }))
+
+      const worksheet = XLSX.utils.json_to_sheet(exportData)
+      const workbook = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Histórico")
+
+      worksheet["!cols"] = [{ wch: 10 }, { wch: 20 }, { wch: 25 }, { wch: 15 }, { wch: 12 }, { wch: 10 }]
+
+      const fileName = `relatorio_${dispensa?.nome || "dispensa"}_${new Date().toLocaleDateString("pt-BR").replace(/\//g, "-")}.xlsx`
+      XLSX.writeFile(workbook, fileName)
+      toast.success("Relatório exportado com sucesso!", {
+        style: {
+          background: "#00c950",
+          color: "#ffffff",
+        },
+      })
+    } catch (error) {
+      console.error("Erro ao exportar relatório:", error)
+      toast.error("Erro ao exportar relatório. Tente novamente.", {
+        style: {
+          background: "#ef4444",
+          color: "#ffffff",
+        },
+      })
+    } finally {
+      setExporting(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#f8fafc]">
-      {/* Header */}
-      <header className="bg-white border-b border-[#e2e8f0] px-6 py-4">
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <Link href="/perfil" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-[#00c950] rounded-full flex items-center justify-center">
-              <span className="text-white text-sm font-bold">f</span>
-            </div>
-            <span className="text-[#1d293d] font-semibold text-lg">foodflow</span>
-          </Link>
-          <div className="flex items-center gap-2">
-            <User className="w-4 h-4 text-[#00c950]" />
-            <span className="text-[#444444] text-sm">{funcionario[0]?.nome || "Usuário"}</span>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* Title and Controls */}
+     <main className="max-w-7xl mx-auto px-6 py-8">
+        
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-6">
             <Link href={`/dispensa/${dispensaId}`}>
@@ -218,23 +259,35 @@ export default function RelatoriosPage() {
 
           {/* Chart */}
           <Card className="lg:col-span-2 bg-white border-[#e2e8f0]">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-[#1d293d] text-lg flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-[#00c950]" />
-                Consumo por Item ({alimentos[0]?.unidadeTipo || "kg"})
-              </CardTitle>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="border-[#e2e8f0] text-[#444444] bg-transparent">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Últimos 7 dias
-                </Button>
+            <CardHeader className="flex flex-col gap-4">
+              <div className="flex flex-row items-center justify-between">
+                <CardTitle className="text-[#1d293d] text-lg flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-[#00c950]" />
+                  Consumo por Item ({alimentos[0]?.unidadeTipo || "kg"})
+                </CardTitle>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="border-[#e2e8f0] text-[#444444] bg-transparent">
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Últimos 7 dias
+                  </Button>
+                </div>
+              </div>
+              {/* Food search bar for chart filtering */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#90a1b9] w-4 h-4" />
+                <Input
+                  placeholder="Pesquisar alimentos..."
+                  className="pl-10 bg-white border-[#e2e8f0] text-[#444444]"
+                  value={foodSearch}
+                  onChange={(e) => setFoodSearch(e.target.value)}
+                />
               </div>
             </CardHeader>
             <CardContent>
               <div className="h-[300px] w-full">
-                {chartData.length > 0 ? (
+                {filteredChartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <BarChart data={filteredChartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                       <XAxis dataKey="name" tick={{ fill: "#444444", fontSize: 12 }} axisLine={{ stroke: "#e2e8f0" }} />
                       <YAxis tick={{ fill: "#444444", fontSize: 12 }} axisLine={{ stroke: "#e2e8f0" }} />
@@ -252,7 +305,7 @@ export default function RelatoriosPage() {
                   </ResponsiveContainer>
                 ) : (
                   <div className="flex items-center justify-center h-full">
-                    <p className="text-[#90a1b9]">Nenhum dado disponível</p>
+                    <p className="text-[#90a1b9]">{foodSearch ? "Nenhum alimento encontrado" : "Nenhum dado disponível"}</p>
                   </div>
                 )}
               </div>
@@ -277,7 +330,14 @@ export default function RelatoriosPage() {
               <History className="w-5 h-5 text-[#432dd7]" />
               Histórico de Utilização
             </CardTitle>
-            <Button className="bg-[#00c950] hover:bg-[#00a63e] text-white">Exportar Relatório</Button>
+            <Button
+              className="bg-[#00c950] hover:bg-[#00a63e] text-white"
+              onClick={handleExportToExcel}
+              disabled={exporting || historicoFiltrado.length === 0}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              {exporting ? "Exportando..." : "Exportar Relatório"}
+            </Button>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -470,33 +530,7 @@ export default function RelatoriosPage() {
         </Card>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-[#e2e8f0] px-6 py-8 mt-12">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 bg-[#00c950] rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">f</span>
-                </div>
-                <span className="text-[#1d293d] font-semibold">foodflow</span>
-              </div>
-              <p className="text-[#90a1b9] text-sm">Sua plataforma de gestão de dispensas.</p>
-            </div>
-            <div>
-              <p className="text-[#90a1b9] text-sm mb-2">Desenvolvido por</p>
-              <div className="flex gap-2">
-                <div className="w-8 h-8 bg-[#e2e8f0] rounded-full"></div>
-                <div className="w-8 h-8 bg-[#e2e8f0] rounded-full"></div>
-                <div className="w-8 h-8 bg-[#e2e8f0] rounded-full"></div>
-              </div>
-            </div>
-          </div>
-          <div className="mt-8 pt-4 border-t border-[#e2e8f0]">
-            <p className="text-[#90a1b9] text-xs">© 2025 foodflow. Projeto integrador</p>
-          </div>
-        </div>
-      </footer>
+    
     </div>
   )
 }

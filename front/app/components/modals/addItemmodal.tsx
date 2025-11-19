@@ -75,7 +75,12 @@ export default function ItemModal({ dispensaId }: { dispensaId: number }) {
 
       console.log("Item enviado com sucesso!");
       setIsOpen(false);
-      toast.success("Item enviado com sucesso!");
+      toast.success("Item adicionado com sucesso!", {
+        style: {
+          background: "#00c950",
+          color: "#ffffff",
+        },
+      });
       router.refresh(); // melhor que window.reload
     } catch (error) {
       console.error("Erro de rede ou outra falha:", error);

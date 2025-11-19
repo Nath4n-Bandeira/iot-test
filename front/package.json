@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
+    "@prisma/client": "6.19.0",
     "@radix-ui/react-accordion": "latest",
     "@radix-ui/react-alert-dialog": "latest",
     "@radix-ui/react-aspect-ratio": "latest",
@@ -45,6 +46,7 @@
     "cmdk": "latest",
     "date-fns": "4.1.0",
     "embla-carousel-react": "latest",
+    "express": "5.1.0",
     "immer": "latest",
     "input-otp": "latest",
     "js-cookie": "latest",
@@ -58,16 +60,14 @@
     "react-hook-form": "latest",
     "react-resizable-panels": "latest",
     "recharts": "latest",
-    "sonner": "latest",
+    "sonner": "^2.0.7",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "use-sync-external-store": "latest",
     "vaul": "latest",
-    "zod": "3.25.76",
-    "zustand": "latest",
     "xlsx": "0.18.5",
-    "@prisma/client": "6.19.0",
-    "express": "5.1.0"
+    "zod": "3.25.76",
+    "zustand": "latest"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.9",

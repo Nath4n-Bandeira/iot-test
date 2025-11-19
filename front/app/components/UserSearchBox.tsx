@@ -1,8 +1,9 @@
 "use client"
 import { useState, useEffect } from "react"
-import { Search, UserPlus, X, Loader2 } from "lucide-react"
+import { Search, UserPlus, X, Loader2 } from 'lucide-react'
 import { useFriendsStore, type Friend } from "../context/FriendsContext"
 import { useClienteStore } from "../context/ClienteContext"
+import { toast } from "sonner"
 
 export function UserSearchBox() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -10,8 +11,8 @@ export function UserSearchBox() {
   const [allUsers, setAllUsers] = useState<Friend[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [pendingRequests, setPendingRequests] = useState<Set<string>>(new Set()) // Track pending requests
-  const { friends, sendFriendRequest, friendRequests } = useFriendsStore() // Updated to use sendFriendRequest
+  const [pendingRequests, setPendingRequests] = useState<Set<string>>(new Set())
+  const { friends, sendFriendRequest, friendRequests } = useFriendsStore()
   const { cliente } = useClienteStore()
 
   useEffect(() => {
@@ -19,7 +20,6 @@ export function UserSearchBox() {
       setLoading(true)
       setError(null)
       try {
-        console.log("[v0] Fetching users from API:", `${process.env.NEXT_PUBLIC_URL_API}/clientes`)
         const response = await fetch(`${process.env.NEXT_PUBLIC_URL_API}/clientes`)
 
         if (!response.ok) {
@@ -27,7 +27,6 @@ export function UserSearchBox() {
         }
 
         const data = await response.json()
-        console.log("[v0] API response:", data)
 
         let users: Friend[] = []
         if (Array.isArray(data)) {
@@ -37,15 +36,12 @@ export function UserSearchBox() {
         } else if (data.data && Array.isArray(data.data)) {
           users = data.data
         } else {
-          console.error("[v0] Unexpected API response structure:", data)
           throw new Error("Formato de resposta inválido")
         }
 
-        console.log("[v0] Processed users:", users)
         setAllUsers(users)
       } catch (err) {
         setError(err instanceof Error ? err.message : "Erro ao carregar usuários")
-        console.error("[v0] Erro ao buscar usuários:", err)
       } finally {
         setLoading(false)
       }
@@ -73,13 +69,19 @@ export function UserSearchBox() {
     try {
       await sendFriendRequest(user.id, user.nome, user.email)
       setSearchQuery("")
+      toast.success(`Pedido de amizade enviado para ${user.nome}!`, {
+        style: {
+          background: "#00c950",
+          color: "#ffffff",
+        },
+      })
     } catch (error) {
-      console.error("[v0] Error sending friend request:", error)
       setPendingRequests((prev) => {
         const next = new Set(prev)
         next.delete(user.id)
         return next
       })
+      toast.error("Erro ao enviar pedido de amizade.")
     }
   }
 
@@ -139,13 +141,13 @@ export function UserSearchBox() {
               </div>
               <button
                 onClick={() => handleAddFriend(user)}
-                disabled={isFriendRequestSent(user.id) || pendingRequests.has(user.id)} // Disable if request already sent
+                disabled={isFriendRequestSent(user.id) || pendingRequests.has(user.id)}
                 className={`p-2 rounded-lg text-white transition-colors ${
                   isFriendRequestSent(user.id) || pendingRequests.has(user.id)
-                    ? "bg-gray-400 cursor-not-allowed" // Show disabled state
+                    ? "bg-gray-400 cursor-not-allowed"
                     : "bg-green-600 hover:bg-green-700"
                 }`}
-                title={isFriendRequestSent(user.id) ? "Pedido de amizade enviado" : "Enviar pedido de amizade"} // Updated tooltip
+                title={isFriendRequestSent(user.id) ? "Pedido de amizade enviado" : "Enviar pedido de amizade"}
               >
                 <UserPlus className="w-5 h-5" />
               </button>

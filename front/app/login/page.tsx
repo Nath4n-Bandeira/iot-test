@@ -4,7 +4,7 @@ import React from 'react'
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { useClienteStore } from "@/app/context/ClienteContext"
-import { useRouter } from "next/navigation"
+import { useRouter } from 'next/navigation'
 import { Lock, Mail, ArrowRight } from 'lucide-react'
 import Cookies from "js-cookie"
 
@@ -51,11 +51,21 @@ export default function Login() {
         toast.success("Login realizado com sucesso!")
         router.push("/perfil")
       } else {
-        toast.error("Erro... Login ou senha incorretos")
+        toast.error("Erro... Login ou senha incorretos", {
+          style: {
+            background: "#dc2626",
+            color: "#ffffff",
+          },
+        })
       }
     } catch (error) {
       console.error("Erro de login:", error)
-      toast.error("Erro inesperado ao fazer login")
+      toast.error("Erro inesperado ao fazer login", {
+        style: {
+          background: "#dc2626",
+          color: "#ffffff",
+        },
+      })
     }
   }
 
